@@ -1,0 +1,54 @@
+! Device: NetArchitect-DIST-01
+! Purpose: Layer 3 distribution; generated from validated design inputs.
+! Assumptions: Cisco IOS-like syntax; verify platform support and interface mapping before deployment.
+! Warnings: Replace credentials, confirm VLAN membership and ACL policy, and review change impact.
+hostname NetArchitect-DIST-01
+no ip domain-lookup
+ip routing
+spanning-tree mode rapid-pvst
+spanning-tree portfast default
+spanning-tree bpduguard default
+vlan 4094
+ name NATIVE-BLACKHOLE
+vlan 10
+ name Management
+vlan 20
+ name Corporate
+vlan 30
+ name Colocation
+interface vlan 20
+ description Corporate gateway
+ ip address 10.20.0.1 255.255.254.0
+ no shutdown
+interface vlan 30
+ description Colocation gateway
+ ip address 10.20.2.1 255.255.255.128
+ no shutdown
+interface vlan 10
+ description Management gateway
+ ip address 10.20.2.129 255.255.255.192
+ no shutdown
+interface GigabitEthernet1/0/48
+ description Uplink trunk - restrict allowed VLANs
+ switchport mode trunk
+ switchport trunk native vlan 4094
+ switchport trunk allowed vlan 20,30,10
+ switchport nonegotiate
+ no shutdown
+ip domain-name netarchitect.local
+username netadmin privilege 15 secret <SET_SECRET_SECURELY>
+crypto key generate rsa modulus 2048
+ip ssh version 2
+line vty 0 4
+ transport input ssh
+ login local
+! Replace the secret placeholder before applying this configuration.
+! QoS starter policy: classify and mark at the trusted edge; validate provider class mapping.
+class-map match-any NETARCH-REALTIME
+ match dscp ef
+policy-map NETARCH-WAN-OUT
+ class NETARCH-REALTIME
+  priority percent 20
+ class class-default
+  fair-queue
+! Apply service-policy output to the correct WAN interface after bandwidth review.

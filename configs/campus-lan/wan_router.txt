@@ -1,0 +1,10 @@
+! Device: WAN edge router
+! Purpose: routing and carrier / cloud handoff template
+! Assumptions: Addressing and interface identifiers are deployment inputs.
+! Warnings: Verify carrier QoS, optical budget, route policy, and platform syntax before deployment.
+hostname NetArchitect-EDGE-01
+no ip domain-lookup
+router ospf 10
+ router-id 10.255.255.254
+ passive-interface default
+! Add explicitly addressed transit interfaces with the correct area.

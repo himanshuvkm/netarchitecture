@@ -1,0 +1,19 @@
+! Device: WAN edge router
+! Purpose: routing and carrier / cloud handoff template
+! Assumptions: Addressing and interface identifiers are deployment inputs.
+! Warnings: Verify carrier QoS, optical budget, route policy, and platform syntax before deployment.
+hostname NetArchitect-EDGE-01
+no ip domain-lookup
+router ospf 10
+ router-id 10.255.255.254
+ passive-interface default
+! Multi-area template: map site-facing interfaces to areas and configure area range summaries at ABRs.
+! Site-to-VLAN mapping was not provided, so area assignments are intentionally left for design completion.
+class-map match-any NETARCH-REALTIME
+ match dscp ef
+policy-map NETARCH-WAN-OUT
+ class NETARCH-REALTIME
+  priority percent 20
+ class class-default
+  fair-queue
+! Apply to the provider-facing interface after validating CIR and traffic policy.

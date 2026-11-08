@@ -1,0 +1,40 @@
+! Device: WAN edge router
+! Purpose: routing and carrier / cloud handoff template
+! Assumptions: Addressing and interface identifiers are deployment inputs.
+! Warnings: Verify carrier QoS, optical budget, route policy, and platform syntax before deployment.
+hostname NetArchitect-EDGE-01
+no ip domain-lookup
+router ospf 10
+ router-id 10.255.255.254
+ passive-interface default
+! Multi-area template: map site-facing interfaces to areas and configure area range summaries at ABRs.
+! Site-to-VLAN mapping was not provided, so area assignments are intentionally left for design completion.
+router bgp 65010
+ bgp log-neighbor-changes
+ neighbor <PEER_IP> remote-as <PEER_AS>
+ address-family ipv4
+  neighbor <PEER_IP> activate
+  neighbor <PEER_IP> prefix-list NETARCH-IN in
+  aggregate-address 10.30.0.0/21 summary-only
+  aggregate-address 10.30.8.0/23 summary-only
+  aggregate-address 10.30.10.0/24 summary-only
+  aggregate-address 10.30.11.0/25 summary-only
+ exit-address-family
+! Aggregates require all component routes in BGP; configure explicit route filters and maximum-prefix before peer activation.
+! IPsec/IKEv2 site-to-site template; inject secrets securely.
+crypto ikev2 proposal NETARCH-IKEV2
+ encryption aes-cbc-256
+ integrity sha256
+ group 14
+crypto ikev2 keyring NETARCH-KEYRING
+ peer REMOTE-SITE
+  address <REMOTE_PEER_IP>
+  pre-shared-key <INJECT_SECRET_SECURELY>
+class-map match-any NETARCH-REALTIME
+ match dscp ef
+policy-map NETARCH-WAN-OUT
+ class NETARCH-REALTIME
+  priority percent 20
+ class class-default
+  fair-queue
+! Apply to the provider-facing interface after validating CIR and traffic policy.
